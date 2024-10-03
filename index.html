@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chụp Ảnh từ Webcam</title>
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+        }
+        main {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+        }
+        h1 {
+            text-align: center;
+        }
+        video {
+            border: 2px solid #000;
+        }
+        canvas {
+            display: none; /* Ẩn canvas nếu không cần hiển thị */
+        }
+        .controls {
+            margin-top: 10px;
+        }
+        #btn {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <main class="container">
+        <h1>Chụp Ảnh Từ Webcam</h1>
+        <hr>
+        <video id="video" width="640" height="480" autoplay></video>
+        <canvas id="canvas" width="640" height="480"></canvas>
+        <div class="controls">
+            <button id="btn">Chụp</button>
+            <a href="#" download="WebCam.png" id="download" hidden>Tải ảnh</a>
+        </div>
+    </main>
+    <script>
+        const btn = document.getElementById('btn');
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const download = document.getElementById('download');
+
+        async function streamWebcam() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+            } catch (error) {
+                console.error('Error accessing the webcam:', error);
+            }
+        }
+        streamWebcam();
+
+        btn.addEventListener('click', () => {
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Convert canvas image to Base64
+            const imageData = canvas.toDataURL('image/png');
+
+            // Send the image data to the server
+            fetch('save_image.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ image: imageData })
+            })
+            .then(response => response.text())
+            .then(data => {
+                console.log('Success:', data);
+                alert('Ảnh đã được lưu vào máy chủ!');
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+        });
+    </script>
+</body>
+</html>
